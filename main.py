@@ -122,6 +122,7 @@ class GetSubtitles(object):
 
         name = name.replace('[', '')
         name = name.replace(']', '')
+        name = name.replace('-', '')
         keywords = []
         info_dict = guessit(name)
 

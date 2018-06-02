@@ -25,8 +25,7 @@ class ZimuzuDownloader(object):
                         application/xml;q=0.9,image/webp,*/*;q=0.8"
         }
         self.site_url = 'http://www.zimuzu.tv'
-        self.search_url = 'http://www.zimuzu.tv/search?\
-                            keyword={0}&type=subtitle'
+        self.search_url = 'http://www.zimuzu.tv/search?keyword={0}&type=subtitle'
 
     def get_subtitles(self, keywords, sub_num=5):
 

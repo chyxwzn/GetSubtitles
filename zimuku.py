@@ -11,6 +11,8 @@ from guessit import guessit
 
 from sys_global_var import py, prefix
 from progress_bar import ProgressBar
+import glob
+import os
 
 
 ''' Zimuku 字幕下载器
@@ -21,11 +23,11 @@ class ZimukuDownloader(object):
 
     def __init__(self):
         self.headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5)\
-                            AppleWebKit 537.36 (KHTML, like Gecko) Chrome",
-            "Accept-Language": "zh-CN,zh;q=0.8",
-            "Accept": "text/html,application/xhtml+xml,\
-                        application/xml;q=0.9,image/webp,*/*;q=0.8"
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7,zh-TW;q=0.6",
+            "Connection": "keep-alive",
+            "Cache-Control": "max-age=0",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"
         }
         self.site_url = 'http://www.zimuku.cn'
         self.search_url = 'http://www.zimuku.cn/search?q='
@@ -148,13 +150,15 @@ class ZimukuDownloader(object):
                     elif 'jollyroger' in lang.attrs['src']:
                         type_score += 8
                 sub_info['lan'] = type_score
-                download_link = 'http:' \
-                    + bs_obj.find('a', {'id': 'down1'}).attrs['href']
-                r = s.get(download_link, timeout=60)
-                bs_obj = BeautifulSoup(r.text, 'html.parser')
-                download_link = bs_obj.find('a', {'rel': 'nofollow'})
-                download_link = 'http://www.subku.net' + \
-                    download_link.attrs['href']
+                download_link = bs_obj.find('a', {'id': 'down1'}).attrs['href']
+                if 'http' not in download_link:
+                    download_link = 'http://' + download_link
+                # print(download_link)
+                # r = s.get(download_link, timeout=60)
+                # bs_obj = BeautifulSoup(r.text, 'html.parser')
+                # download_link = bs_obj.find('a', {'rel': 'nofollow'}).attrs['href']
+                # if 'http' not in download_link:
+                #     download_link = 'http://www.subku.net' + download_link
                 sub_info['link'] = download_link
             else:
                 # 射手字幕页面
@@ -182,38 +186,43 @@ class ZimukuDownloader(object):
 
     def download_file(self, file_name, download_link):
 
-        try:
-            with closing(requests.get(download_link, stream=True)) as response:
-                filename = response.headers['Content-Disposition']
-                chunk_size = 1024  # 单次请求最大值
-                # 内容体总大小
-                content_size = int(response.headers['content-length'])
-                bar = ProgressBar(prefix + ' Get',
-                                  file_name.strip(), content_size)
-                sub_data_bytes = b''
-                for data in response.iter_content(chunk_size=chunk_size):
-                    sub_data_bytes += data
-                    bar.refresh(len(sub_data_bytes))
-        except requests.Timeout:
-            return None, None, 'false'
-        if '.rar' in filename:
-            datatype = '.rar'
-        elif '.zip' in filename:
-            datatype = '.zip'
-        elif '.7z' in filename:
-            datatype = '.7z'
-        else:
-            datatype = 'Unknown'
-
-        with open('test.zip', 'wb') as f:
-            f.write(sub_data_bytes)
+        # try:
+        #     with closing(requests.get(download_link, stream=True)) as response:
+        #         print(response.headers)
+        #         filename = response.headers['Content-Disposition']
+        #         chunk_size = 1024  # 单次请求最大值
+        #         # 内容体总大小
+        #         content_size = int(response.headers['content-length'])
+        #         bar = ProgressBar(prefix + ' Get',
+        #                           file_name.strip(), content_size)
+        #         sub_data_bytes = b''
+        #         for data in response.iter_content(chunk_size=chunk_size):
+        #             sub_data_bytes += data
+        #             bar.refresh(len(sub_data_bytes))
+        # except requests.Timeout:
+        #     return None, None, 'false'
+        print(download_link)
+        input("enter if download manually:")
+        for filename in glob.iglob(r'**/*', recursive=True):
+            print(filename)
+            if '.rar' in filename:
+                datatype = '.rar'
+                break
+            elif '.zip' in filename:
+                datatype = '.zip'
+                break
+            else:
+                datatype = 'unknown'
+        with open(filename, 'rb') as f:
+            sub_data_bytes = f.read()
+        os.remove(filename)
         return datatype, sub_data_bytes
 
 
 if __name__ == '__main__':
     from main import GetSubtitles
     keywords, info_dict = GetSubtitles(
-        '', 1, 2, 3, 4, 5, 6, 7).sort_keyword('the expanse s01e01')
+        '', 1, 2, 3, 4, 5, 6, 7).sort_keyword('House of Cards 2013 S05 1080p BluRay')
     zimuku = ZimukuDownloader()
     sub_dict = zimuku.get_subtitles(keywords)
     print('\nResult:')
